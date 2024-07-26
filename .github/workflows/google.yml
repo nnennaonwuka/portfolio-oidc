@@ -1,0 +1,111 @@
+# This workflow will build a docker container, publish it to Google Container Registry, and deploy it to GKE when a release is created
+#
+# To configure this workflow:
+#
+# 1. Ensure that your repository contains the necessary configuration for your Google Kubernetes Engine cluster, including deployment.yml, kustomization.yml, service.yml, etc.
+#
+# 2. Set up secrets in your workspace: GKE_PROJECT with the name of the project and GKE_SA_KEY with the Base64 encoded JSON service account key (https://github.com/GoogleCloudPlatform/github-actions/tree/docs/service-account-key/setup-gcloud#inputs).
+#
+# 3. Change the values for the GKE_ZONE, GKE_CLUSTER, IMAGE, and DEPLOYMENT_NAME environment variables (below).
+#
+# For more support on how to run the workflow, please visit https://github.com/google-github-actions/setup-gcloud/tree/master/example-workflows/gke  .
+
+name: Build and Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GKE_PROJECT: ${{ secrets.GKE_PROD_PROJECT }}
+  GKE_EMAIL: ${{ secrets.GKE_EMAIL }}
+  GITHUB_SHA: ${{ github.sha }}
+  GKE_CLUSTER: agric-os-prod-v2    # TODO: update to cluster name
+  GKE_ZONE: europe-west3-a   # TODO: update to cluster zone
+  DEPLOYMENT_NAME: portfolio-management-v2 # TODO: update to deployment name
+  IMAGE: portfolio-management
+  REGISTRY_HOSTNAME: gcr.io
+  src: ./src
+  main: .
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    # Add  "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+     # Setup gcloud CLI
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: ${{ secrets.GKE_PROD_KEY }}
+        token_format: 'access_token'
+        workload_identity_provider: 'projects/524687905739/locations/global/workloadIdentityPools/oidc-pool/providers/oidc-provider'
+        service_account: 'oidc-test@$GKE_PROJECT.iam.gserviceaccount.com'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v1'
+
+    - name: 'Use gcloud CLI'
+      run: 'gcloud info'
+
+
+    # Configure docker to use the gcloud command-line tool as a credential helper
+    - run: |
+        # Set up docker to authenticate
+        # via gcloud command-line tool.
+        gcloud auth configure-docker
+
+    # Build the Docker image
+    - name: Build
+      run: |
+        echo $REGISTRY_HOSTNAME
+        echo $GKE_PROJECT
+        echo $IMAGE
+        echo $GITHUB_SHA
+        docker build -t "$REGISTRY_HOSTNAME"/"$GKE_PROJECT"/"$IMAGE":"$GITHUB_SHA" \
+          --build-arg GITHUB_SHA="$GITHUB_SHA" \
+          --build-arg GITHUB_REF="$GITHUB_REF" ./
+      working-directory: ${{ env.main }}
+
+     # Push the Docker image to Google Container Registry
+    - name: Publish
+      run: |
+        docker push $REGISTRY_HOSTNAME/$GKE_PROJECT/$IMAGE:$GITHUB_SHA
+      working-directory: ${{ env.main }}
+
+    # Set up kustomize
+    - name: Set up Kustomize
+      run: |
+        curl -o kustomize --location https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
+        chmod u+x ./kustomize
+      working-directory: ${{ env.src }}
+      
+      
+    - id: 'get-credentials'
+      uses: 'google-github-actions/get-gke-credentials@v1'
+      with:
+        cluster_name:  ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_ZONE }}
+
+    # Deploy the Docker test image to the GKE cluster
+    - name: Deploy
+      run: |
+        sed -i -e 's/REGISTRY_HOSTNAME/'"$REGISTRY_HOSTNAME"'/' ./infra/k8s/portfolio-management-depl.yaml
+        sed -i -e 's/IMAGE/'"$IMAGE"'/' ./infra/k8s/portfolio-management-depl.yaml
+        sed -i -e 's/GITHUB_SHA/'"$GITHUB_SHA"'/' ./infra/k8s/portfolio-management-depl.yaml
+        ./kustomize build ./infra/k8s | kubectl apply -f -
+        kubectl rollout status deployment/$DEPLOYMENT_NAME
+        kubectl get services -o wide
+      working-directory: ${{ env.src }}

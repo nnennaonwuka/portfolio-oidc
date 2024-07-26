@@ -1,0 +1,30 @@
+export interface PaymentDetails {
+  payment_details_id: string;
+  depositor_name: string;
+  deposit_date: string;
+  tg_id: string;
+  mode_of_payment: string;
+  amount: string;
+  latitude: string;
+  longitude: string;
+  date_logged: string;
+  bank_name: string;
+  bank_community_id: string;
+  bank_ward_id: string;
+  transaction_charges: string;
+  transaction_receipt_id: string;
+  company_receipt_id;
+  payment_transaction_id: string;
+  staff_id: string;
+  imei: string;
+  app_version: string;
+  sync_flag: number;
+  bank_lga_id: string;
+  payment_status: string;
+  delete_status: number;
+  reason_for_deletion: string;
+  delete_date: string;
+  transaction_receipt_image: string;
+  pcs_logged_flag: number;
+  pcs_id: string;
+}

@@ -1,0 +1,29 @@
+export interface TrustGroupGeneratedRf {
+  rf_id: string;
+  rf_type: string;
+  rf_status: number;
+  staff_id_created: string;
+  staff_id_solved: string;
+  staff_id_updated: string;
+  hub_id: string;
+  ik_number: string;
+  reopen_flag: number;
+  contact_person: string;
+  contact_method: string;
+  date_logged: string;
+  date_solved: string;
+  date_updated: string;
+  comment_created: string;
+  comment_solved: string;
+  comment_updated: string;
+  app_version: string;
+  imei: string;
+  system_risk_level: string;
+  user_risk_level: string;
+  log_entity_id: string;
+  solve_entity_id: string;
+  category: string;
+  solve_method: string;
+  red_flag_id: string;
+  presence_flag: string;
+}

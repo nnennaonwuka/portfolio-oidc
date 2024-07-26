@@ -1,0 +1,8 @@
+{
+  "all": true,
+  "reporter": ["lcov", "text", "text-summary"],
+  "report-dir": "coverage",
+  "check-coverage": true,
+  "include": ["src/services/**"],
+  "exclude": ["test/**"]
+}
