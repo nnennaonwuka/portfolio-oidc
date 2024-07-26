@@ -36,7 +36,7 @@ jobs:
       uses: 'google-github-actions/auth@v1'
       with:
         token_format: 'access_token'
-        workload_identity_provider: 'projects/524687905739/locations/global/workloadIdentityPools/oidc-pool/providers/oidc-provider'
+        workload_identity_provider: 'projects/agri-os-prod/locations/global/workloadIdentityPools/oidc-pool/providers/oidc-provider'
         service_account: 'oidc-test@agri-os-prod.iam.gserviceaccount.com'
 
       # Add this step to print the access token for debugging purposes
