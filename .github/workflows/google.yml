@@ -39,11 +39,16 @@ jobs:
         workload_identity_provider: 'projects/524687905739/locations/global/workloadIdentityPools/oidc-pool/providers/oidc-provider'
         service_account: 'oidc-test@agri-os-prod.iam.gserviceaccount.com'
 
-    # - name: 'Set up Cloud SDK'
-    #   uses: 'google-github-actions/setup-gcloud@v1'
+      # Add this step to print the access token for debugging purposes
+    - name: Print Access Token
+      run: |
+        gcloud auth print-access-token
 
-    # - name: 'Use gcloud CLI'
-    #   run: 'gcloud info'
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v1'
+
+    - name: 'Use gcloud CLI'
+      run: 'gcloud info'
 
     - name: Build
       run: |
