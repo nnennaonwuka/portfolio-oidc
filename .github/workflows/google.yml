@@ -51,7 +51,7 @@ jobs:
       with:
         token_format: 'access_token'
         workload_identity_provider: 'projects/524687905739/locations/global/workloadIdentityPools/oidc-pool/providers/oidc-provider'
-        service_account: 'oidc-test@$GKE_PROJECT.iam.gserviceaccount.com'
+        service_account: 'oidc-test@agri-os-prod.iam.gserviceaccount.com'
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
